@@ -1,0 +1,35 @@
+- hosts: [pankaj]
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: apt key
+    apt_key:
+      id: 0EBFCD88
+      url: "https://download.docker.com/linux/debian/gpg"
+      state: present
+  - name: adding repository
+    apt_repository: 
+      repo: deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+      state: present
+  - name: Install nginx apt-transport-https 
+    package: name={{ item }} state=latest update_cache=yes
+    with_items:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg2
+      - software-properties-common
+      - nginx
+      - docker-ce
+    notify:
+    - restart nginx
+
+  - name: write configuration
+    copy:
+      src: index.html
+      dest: /var/www/html/index.html
+  handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
