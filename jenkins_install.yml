@@ -1,0 +1,32 @@
+- hosts: [pankaj]
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: apt key
+    apt_key:
+      url: "http://pkg.jenkins-ci.org/debian-stable/jenkins-ci.org.key"
+      state: present
+  - name: adding repository
+    apt_repository: 
+      repo: deb http://pkg.jenkins-ci.org/debian-stable binary/
+      state: present
+  - name: Install nginx apt-transport-https 
+    package: name={{ item }} state=latest update_cache=yes
+    with_items:
+      - jenkins
+      - curl
+      - nginx
+    notify:
+    - restart nginx
+
+  - name: write configuration
+    copy:
+      src: index.html
+      dest: /var/www/html/index.html
+  - name: Admin password for jenkins
+    command: cat /var/lib/jenkins/secrets/initialAdminPassword
+  handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
